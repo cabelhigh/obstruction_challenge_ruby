@@ -9,18 +9,23 @@ class Game
     end
     @currentPlayer = 1 #1 is player, 2 is AI
     @done = false #determines if the game is done or not. used in run
+    @numPlayers=0
   end
 
 
   #Runs the game by calling turn() whenever @done is not true
   def run
     puts "Welcome to Obstruction!"
+    while !@numPlayers.between?(1,2) do
+      puts "#{@numPlayers==0 ? "Would you like to play with 1 or 2 players?" : "Please enter a number between 1 and 2!"}"
+      @numPlayers=gets.chomp.to_i
+    end
     while(!@done) do
       turn
       @done=checkDone #checks if there are still any 0s on the board
     end
     printGameBoard
-    puts "Oh no! Player #{@currentPlayer} can't make any more moves!\nThanks for playing!!"
+    puts "Oh no! #{@currentPlayer==2&&@numPlayers==1?"The AI" : "Player #{@currentPlayer}"} can't make any more moves! Player #{togglePlayer} wins!\nThanks for playing!!"
 
   end
 
@@ -28,21 +33,25 @@ class Game
   def turn
     selectionIsGood=false
     cell = [] #the eventual coordinates of your selection
-    if @currentPlayer == 1
+    if @numPlayers == 2 || (@numPlayers==1&&@currentPlayer==1)
       puts "Player #{@currentPlayer}, it's your turn!"
     else
       print "The AI is thinking"
     end
     while !selectionIsGood do
-      printGameBoard if @currentPlayer==1
-      puts "Please enter the coordinates of the cell you want to mark, seperated by commas." if @currentPlayer==1
-      @currentPlayer==1 ? cell = gets.chomp.split(",") : cell = [rand(6), rand(6).to_s] #if currentPlayer is 1, then get the coordinates from the player, else generate them randomly
+      printGameBoard if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
+      puts "Please enter the coordinates of the cell you want to mark, seperated by commas." if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
+      @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1) ? cell = gets.chomp.split(",") : cell = [rand(6), rand(6).to_s] #if currentPlayer is 1, then get the coordinates from the player, else generate them randomly
+      while cell.length!=2 do
+        puts "Please enter 2 numbers, seperated by commas!"
+        cell = gets.chomp.split(",")
+      end
       selectionIsGood=checkCell cell #checks if those coordinates are valid
     end
     row = cell[0].to_i
     col = cell[1]
     @board[row][col]=@currentPlayer
-    if @currentPlayer==2
+    if @currentPlayer==2 && @numPlayers==1
       print "."
       sleep(0.7)
       print "."
@@ -50,7 +59,7 @@ class Game
       print ".\n"
       sleep(0.7)
     end
-    printGameBoard
+    printGameBoard if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
     togglePlayer #changes @currentPlayer from 1 to 2 or 2 to 1
 
   end
@@ -66,31 +75,31 @@ class Game
       #if the col+x and the row+y are between 0 - 6, then check if a player has already placed on that square
       #i.e. if col=0 and row = 1, if 0+1 and 1+0 == 1, you cannot place there
       if((row.between?(0,6)&&sToI(col, 1).between?(0,6)) && (board[row][iToS(col, 1)]==1 || board[row][iToS(col, 1)]==2))
-        puts "That square is right next to another player's cell!" if @currentPlayer==1
+        puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif((row.between?(0,6)&&sToI(col, -1).between?(0,6)) && (board[row][iToS(col, -1)]==1 || board[row][iToS(col, -1)]==2))
-          puts "That square is right next to another player's cell!" if @currentPlayer==1
+          puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif(((row+1).between?(0,5)&&sToI(col).between?(0,5)) && (board[row+1][iToS(col)]==1 || board[row+1][iToS(col)]==2))
-          puts "That square is right next to another player's cell!" if @currentPlayer==1
+          puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif(((row-1).between?(0,5)&&sToI(col).between?(0,5)) && (board[row-1][iToS(col)]==1 || board[row-1][iToS(col)]==2))
-          puts "That square is right next to another player's cell!" if @currentPlayer==1
+          puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif(((row-1).between?(0,5)&&sToI(col,-1).between?(0,5)) && (board[row-1][iToS(col,-1)]==1 || board[row-1][iToS(col,-1)]==2))
-          puts "That square is right next to another player's cell!" if @currentPlayer==1
+          puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif(((row+1).between?(0,5)&&sToI(col,-1).between?(0,5)) && (board[row+1][iToS(col,-1)]==1 || board[row+1][iToS(col,-1)]==2))
-          puts "That square is right next to another player's cell!" if @currentPlayer==1
+          puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif(((row+1).between?(0,5)&&sToI(col,1).between?(0,5)) && (board[row+1][iToS(col,1)]==1 || board[row+1][iToS(col,1)]==2))
-          puts "That square is right next to another player's cell!" if @currentPlayer==1
+          puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif(((row-1).between?(0,5)&&sToI(col,1).between?(0,5)) && (board[row-1][iToS(col,1)]==1 || board[row-1][iToS(col,1)]==2))
-          puts "That square is right next to another player's cell!" if @currentPlayer==1
+          puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif board[row][iToS(col)]==1 || board[row][iToS(col)]==2
-        puts "That square is right next to another player's cell!" if @currentPlayer==1
+        puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       else
         xAroundCell(row, col) #puts the Xs on the board
