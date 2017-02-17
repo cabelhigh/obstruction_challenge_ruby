@@ -1,34 +1,56 @@
 class Game
   attr_accessor :board, :currentPlayer
 
+  # TODO: Make variable board sizes
+
   #rn board is hardcoded to be 6x6, since I thought that the old 2d array design was causing bugs (it wasn't, it was an eronious .fill(). If I want to be able to make dynamic boards, that'll have to be for 2.0)
   def initialize
     @board = [] #makes an empry array
-    6.times do #Six times, push a hash to board, with the keys representing the 'columns' in our grid
-      @board.push({"0" => 0, "1" => 0, "2" => 0, "3" => 0, "4" => 0, "5" => 0 })
-    end
+    @dims = [-1,-1]
+
+    # 6.times do #Six times, push a hash to board, with the keys representing the 'columns' in our grid
+    #   @board.push({"0" => 0, "1" => 0, "2" => 0, "3" => 0, "4" => 0, "5" => 0 })
+    # end
     @currentPlayer = 1 #1 is player, 2 is AI
     @done = false #determines if the game is done or not. used in run
-    @numPlayers=0
+    @numPlayers=-1
   end
+
 
 
   #Runs the game by calling turn() whenever @done is not true
   def run
     puts "Welcome to Obstruction!"
-    while !@numPlayers.between?(1,2) do
-      puts "#{@numPlayers==0 ? "Would you like to play with 1 or 2 players?" : "Please enter a number between 1 and 2!"}"
+    while !@numPlayers.between?(0,2) do
+      puts "#{@numPlayers==-1 ? "Would you like to play with 1 or 2 players?" : "Please enter a number between 1 and 2!"}"
       @numPlayers=gets.chomp.to_i
     end
+    while @dims.length!=2 || (@dims[0]<=0 && @dims[1]<=0) do
+      puts "Please enter board dimensions, seperated by commas."
+      @dims = gets.chomp.split(",").map(&:to_i)
+    end
+    @dims[1]=@dims[1]-1 #gets the indexing right
+    makeBoard
     while(!@done) do
       turn
       @done=checkDone #checks if there are still any 0s on the board
     end
     printGameBoard
-    puts "Oh no! #{@currentPlayer==2&&@numPlayers==1?"The AI" : "Player #{@currentPlayer}"} can't make any more moves! Player #{togglePlayer} wins!\nThanks for playing!!"
+    puts "Oh no! #{@currentPlayer==2&&@numPlayers==1?"The AI can't make any more moves! Player 1 wins!" : "Player #{@currentPlayer} can't make any more moves! Player #{togglePlayer} wins!"}\nThanks for playing!!"
 
   end
 
+  def makeBoard
+    @dims[0].times do
+      h = Hash.new
+      for i in 0..@dims[1] do
+        h[i.to_s]=0
+      end
+      @board << h
+    end
+    @dims[0]=@dims[0]-1 #sets up the correct indexing for the rest of the methods
+
+  end
   #prompts you/the Ai for a selection until it's not off the board, on top of another mark, or next to another mark
   def turn
     selectionIsGood=false
@@ -41,7 +63,7 @@ class Game
     while !selectionIsGood do
       printGameBoard if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
       puts "Please enter the coordinates of the cell you want to mark, seperated by commas." if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
-      @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1) ? cell = gets.chomp.split(",") : cell = [rand(6), rand(6).to_s] #if currentPlayer is 1, then get the coordinates from the player, else generate them randomly
+      @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1) ? cell = gets.chomp.split(",") : cell = [rand(@dims[0]), rand(@dims[1]).to_s] #if currentPlayer is 1, then get the coordinates from the player, else generate them randomly
       while cell.length!=2 do
         puts "Please enter 2 numbers, seperated by commas!"
         cell = gets.chomp.split(",")
@@ -68,34 +90,34 @@ class Game
   def checkCell c
     row = c[0].to_i #the number, representing the index of the board array, i.e board[1]
     col = c[1] #the string, representing the key of the hash inside each index of the board array
-    if (!row.between?(0,6)||!sToI(col).between?(0,6))
+    if (!row.between?(0,@dims[0])||!sToI(col).between?(0,@dims[1]))
       puts "Your selection is out of bounds!"
       false
     else
       #if the col+x and the row+y are between 0 - 6, then check if a player has already placed on that square
       #i.e. if col=0 and row = 1, if 0+1 and 1+0 == 1, you cannot place there
-      if((row.between?(0,6)&&sToI(col, 1).between?(0,6)) && (board[row][iToS(col, 1)]==1 || board[row][iToS(col, 1)]==2))
+      if((row.between?(0,@dims[0])&&sToI(col, 1).between?(0,@dims[1])) && (board[row][iToS(col, 1)]==1 || board[row][iToS(col, 1)]==2))
         puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
-      elsif((row.between?(0,6)&&sToI(col, -1).between?(0,6)) && (board[row][iToS(col, -1)]==1 || board[row][iToS(col, -1)]==2))
+      elsif((row.between?(0,@dims[0])&&sToI(col, -1).between?(0,@dims[1])) && (board[row][iToS(col, -1)]==1 || board[row][iToS(col, -1)]==2))
           puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
-      elsif(((row+1).between?(0,5)&&sToI(col).between?(0,5)) && (board[row+1][iToS(col)]==1 || board[row+1][iToS(col)]==2))
+      elsif(((row+1).between?(0,@dims[0])&&sToI(col).between?(0,@dims[1])) && (board[row+1][iToS(col)]==1 || board[row+1][iToS(col)]==2))
           puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
-      elsif(((row-1).between?(0,5)&&sToI(col).between?(0,5)) && (board[row-1][iToS(col)]==1 || board[row-1][iToS(col)]==2))
+      elsif(((row-1).between?(0,@dims[0])&&sToI(col).between?(0,@dims[1])) && (board[row-1][iToS(col)]==1 || board[row-1][iToS(col)]==2))
           puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
-      elsif(((row-1).between?(0,5)&&sToI(col,-1).between?(0,5)) && (board[row-1][iToS(col,-1)]==1 || board[row-1][iToS(col,-1)]==2))
+      elsif(((row-1).between?(0,@dims[0])&&sToI(col,-1).between?(0,@dims[1])) && (board[row-1][iToS(col,-1)]==1 || board[row-1][iToS(col,-1)]==2))
           puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
-      elsif(((row+1).between?(0,5)&&sToI(col,-1).between?(0,5)) && (board[row+1][iToS(col,-1)]==1 || board[row+1][iToS(col,-1)]==2))
+      elsif(((row+1).between?(0,@dims[0])&&sToI(col,-1).between?(0,@dims[1])) && (board[row+1][iToS(col,-1)]==1 || board[row+1][iToS(col,-1)]==2))
           puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
-      elsif(((row+1).between?(0,5)&&sToI(col,1).between?(0,5)) && (board[row+1][iToS(col,1)]==1 || board[row+1][iToS(col,1)]==2))
+      elsif(((row+1).between?(0,@dims[0])&&sToI(col,1).between?(0,@dims[1])) && (board[row+1][iToS(col,1)]==1 || board[row+1][iToS(col,1)]==2))
           puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
-      elsif(((row-1).between?(0,5)&&sToI(col,1).between?(0,5)) && (board[row-1][iToS(col,1)]==1 || board[row-1][iToS(col,1)]==2))
+      elsif(((row-1).between?(0,@dims[0])&&sToI(col,1).between?(0,@dims[1])) && (board[row-1][iToS(col,1)]==1 || board[row-1][iToS(col,1)]==2))
           puts "That square is right next to another player's cell!" if @numPlayers==2 || (@numPlayers==1&&@currentPlayer==1)
         false
       elsif board[row][iToS(col)]==1 || board[row][iToS(col)]==2
@@ -112,7 +134,7 @@ class Game
   def xAroundCell(row, col)
     for x in -1..1
       for y in -1..1
-        if (row+x).between?(0,5) && (sToI(col, y).between?(0,5))
+        if (row+x).between?(0,@dims[0]) && (sToI(col, y).between?(0,@dims[1]))
           @board[row+x][iToS(col, y)]="X"
         end
       end
